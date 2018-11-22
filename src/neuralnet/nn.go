@@ -7,10 +7,11 @@ import (
 	"os"
 )
 
-// FIXME replace with proper types!!!
 type WeightVector []float64
-type Vector []float64
-type Sample []Vector
+type XVector []float64
+type YVector []float64
+type XSample []XVector
+type YSample []YVector
 
 type NNOrder struct {
 	D, M, K int
@@ -25,7 +26,7 @@ func (order *NNOrder) ExpectedPackedWeightsCount() int {
 	return (order.M*order.D + order.K*order.M)
 }
 
-func (order *NNOrder) ForWeights(wts []float64) *SingleLayerNN {
+func (order *NNOrder) ForWeights(wts WeightVector) *SingleLayerNN {
 	if len(wts) != order.ExpectedPackedWeightsCount() {
 		panic(fmt.Sprintf("invalid length of weights %d != %d", len(wts), order.ExpectedPackedWeightsCount()))
 	}
@@ -52,7 +53,7 @@ func (nn *SingleLayerNN) mk(m int, k int) int {
 	return nn.order.M*nn.order.D + m + k*nn.order.M
 }
 
-func (nn *SingleLayerNN) a_j(x []float64) []float64 {
+func (nn *SingleLayerNN) a_j(x XVector) []float64 {
 	if len(x) != nn.order.D {
 		panic(fmt.Sprintf("invalid length of x: %d != %d", len(x), nn.order.D))
 	}
@@ -91,11 +92,11 @@ func (nn *SingleLayerNN) z_k(a_k []float64) []float64 {
 	return mapOverVector(a_k, nn.proc.Sigma)
 }
 
-func (nn *SingleLayerNN) Hidden(x []float64) []float64 {
+func (nn *SingleLayerNN) Hidden(x XVector) []float64 {
 	return nn.z_j(nn.a_j(x))
 }
 
-func (nn *SingleLayerNN) Predict(x []float64) []float64 {
+func (nn *SingleLayerNN) Predict(x XVector) YVector {
 	a_j := nn.a_j(x)
 	z_j := nn.z_j(a_j)
 	a_k := nn.a_k(z_j)
@@ -103,7 +104,7 @@ func (nn *SingleLayerNN) Predict(x []float64) []float64 {
 	return y_k
 }
 
-func (nn *SingleLayerNN) ErfSampleValue(x [][]float64, t [][]float64) float64 {
+func (nn *SingleLayerNN) ErfSampleValue(x XSample, t YSample) float64 {
 	value := 0.0
 	for i := range x {
 		value += nn.ErfValue(x[i], t[i])
@@ -111,7 +112,7 @@ func (nn *SingleLayerNN) ErfSampleValue(x [][]float64, t [][]float64) float64 {
 	return value
 }
 
-func (nn *SingleLayerNN) ErfValue(x []float64, t []float64) float64 {
+func (nn *SingleLayerNN) ErfValue(x XVector, t YVector) float64 {
 	if len(t) != nn.order.K {
 		panic(fmt.Sprintf("invalid length of t: %d != %d", len(t), nn.order.K))
 	}
@@ -121,15 +122,23 @@ func (nn *SingleLayerNN) ErfValue(x []float64, t []float64) float64 {
 	return ssqdiff(y, t) / 2
 }
 
-func (nn *SingleLayerNN) PredictSample(sample_x [][]float64) [][]float64 {
-	return mapOverSample(nn.Predict, sample_x)
+func (nn *SingleLayerNN) PredictSample(sample_x XSample) YSample {
+	result := make(YSample, len(sample_x))
+	for i, xv := range sample_x {
+		result[i] = nn.Predict(xv)
+	}
+	return result
 }
 
-func (nn *SingleLayerNN) HiddenSample(sample_x [][]float64) [][]float64 {
-	return mapOverSample(nn.Hidden, sample_x)
+func (nn *SingleLayerNN) HiddenSample(sample_x XSample) [][]float64 {
+	result := make([][]float64, len(sample_x))
+	for i, xv := range sample_x {
+		result[i] = nn.Hidden(xv)
+	}
+	return result
 }
 
-func (nn *SingleLayerNN) GradientSample(sample_x [][]float64, sample_t [][]float64) []float64 {
+func (nn *SingleLayerNN) GradientSample(sample_x XSample, sample_t YSample) []float64 {
 	gradient := make([]float64, nn.order.ExpectedPackedWeightsCount())
 	for n := range sample_x {
 		floats.Add(gradient, nn.Gradient(sample_x[n], sample_t[n]))
@@ -141,7 +150,7 @@ func h_prim(x float64) float64 { //TODO implement other derivatives...
 	return 1 - math.Pow(math.Tanh(x), 2)
 }
 
-func (nn *SingleLayerNN) Gradient(x []float64, t []float64) []float64 {
+func (nn *SingleLayerNN) Gradient(x XVector, t YVector) WeightVector {
 	gradient := make([]float64, nn.order.ExpectedPackedWeightsCount())
 
 	// forward...
@@ -186,7 +195,7 @@ func perturbed(w []float64, p []float64, eta float64) []float64 {
 	return result
 }
 
-func (order NNOrder) FitByCG(sample_x [][]float64, sample_t [][]float64, w0 []float64) (*SingleLayerNN, []float64) {
+func (order NNOrder) FitByCG(sample_x XSample, sample_t YSample, w0 WeightVector) (*SingleLayerNN, []float64) {
 	eta := 1.0
 
 	for tries := 0; tries < 1000; tries++ {
@@ -226,14 +235,6 @@ func (order NNOrder) FitByCG(sample_x [][]float64, sample_t [][]float64, w0 []fl
 	}
 	best_nn := order.ForWeights(w0)
 	return best_nn, best_nn.wts
-}
-
-func mapOverSample(f func([]float64) []float64, sample_x [][]float64) [][]float64 {
-	result := make([][]float64, len(sample_x))
-	for i, xv := range sample_x {
-		result[i] = f(xv)
-	}
-	return result
 }
 
 func ssqdiff(a []float64, b []float64) float64 {

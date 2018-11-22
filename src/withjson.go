@@ -18,16 +18,16 @@ func arrayOfSize(nRepeat int, value float64) []float64 {
 type Request struct {
 	ShouldFit bool
 	Order     neuralnet.NNOrder
-	Wts       []float64
-	X         [][]float64
-	T         [][]float64
+	Wts       neuralnet.WeightVector
+	X         neuralnet.XSample
+	T         neuralnet.YSample
 }
 
 type Result struct {
-	Wts       []float64
-	Predicted [][]float64
+	Wts       neuralnet.WeightVector
+	Predicted neuralnet.YSample
 	ErfValue  float64
-	Gradient  []float64
+	Gradient  neuralnet.WeightVector
 	Hidden    [][]float64
 }
 
@@ -56,14 +56,14 @@ func main() {
 		x := request.X
 		if x == nil {
 			os.Stderr.WriteString("X not given, defaulting to 1s...\n")
-			x = make([][]float64, 1)
+			x = make(neuralnet.XSample, 1)
 			x[0] = arrayOfSize(request.Order.D, 0.1)
 		}
 
 		t := request.T
 		if t == nil {
 			os.Stderr.WriteString("T not given, defaulting to 1s...\n")
-			t = make([][]float64, 1)
+			t = make(neuralnet.YSample, 1)
 			t[0] = arrayOfSize(request.Order.K, 1.0)
 		}
 

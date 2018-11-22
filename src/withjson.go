@@ -17,10 +17,12 @@ func arrayOfSize(nRepeat int, value float64) []float64 {
 
 type Request struct {
 	ShouldFit bool
+	NetworkRT neuralnet.NetworkResponseType
 	Order     neuralnet.NNOrder
 	Wts       neuralnet.WeightVector
 	X         neuralnet.XSample
 	T         neuralnet.YSample
+	Verbose   bool
 }
 
 type Result struct {
@@ -67,12 +69,17 @@ func main() {
 			t[0] = arrayOfSize(request.Order.K, 1.0)
 		}
 
+		responseType := request.NetworkRT
+		if responseType == "" {
+			responseType = neuralnet.Regression
+		}
+
 		var nn *neuralnet.SingleLayerNN
 		var wts []float64
 		if request.ShouldFit {
-			nn, wts = request.Order.FitByCG(x, t, w0)
+			nn, wts = request.Order.OfResponseType(responseType).FitByCG(x, t, w0, request.Verbose)
 		} else {
-			nn = request.Order.ForWeights(w0)
+			nn = request.Order.OfResponseType(responseType).ForWeights(w0)
 			wts = w0
 		}
 

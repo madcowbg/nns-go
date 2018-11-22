@@ -11,7 +11,7 @@ The code is in Go, and requests/respones are JSON, so other languages can call i
 
 Send JSON-formatted queries via STDIN:
 ```json
-{"Order": {"D":2,"M":4,"K":3}, "Wts":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], "ShouldFit": true}
+{"Order": {"D":2,"M":4,"K":3}, "Wts":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], "ShouldFit": true, "NetworkRT": "regression"}
 ```
 and you will receive back the results in STDOUT:
 ```JSON

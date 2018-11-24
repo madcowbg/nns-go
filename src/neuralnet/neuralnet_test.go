@@ -8,7 +8,7 @@ import (
 )
 
 func TestSingleLayerNetwork(t *testing.T) {
-	structure := NNOrder{2, []int{4}, 3}.OfResponseType("regression")
+	structure := NNOrder{2, []int{4}, 3}.OfResponseType(Regression)
 	w0 := ArrayOfSize(structure.ExpectedPackedWeightsCount(), 1.0)
 
 	sample_x := XSample{{1, 1}}
@@ -21,7 +21,7 @@ func TestSingleLayerNetwork(t *testing.T) {
 }
 
 func TestMLNWithSingleLayer(t *testing.T) {
-	structure := NNOrder{2, []int{4}, 3}.OfResponseType("regression")
+	structure := NNOrder{2, []int{4}, 3}.OfResponseType(Regression)
 	w0 := ArrayOfSize(structure.ExpectedPackedWeightsCount(), 1.0)
 
 	sample_x := XSample{{1, 1}}
@@ -34,7 +34,7 @@ func TestMLNWithSingleLayer(t *testing.T) {
 }
 
 func TestMultiLayerNetwork(t *testing.T) {
-	structure := NNOrder{2, []int{3, 2}, 3}.OfResponseType("regression")
+	structure := NNOrder{2, []int{3, 2}, 3}.OfResponseType(Regression)
 	w0 := ArrayOfSize(structure.ExpectedPackedWeightsCount(), 1.0)
 
 	sample_x := XSample{{1, 1}, {1, 2}, {2, 1}}
@@ -61,23 +61,27 @@ func TestMultiLayerNetwork(t *testing.T) {
 }
 
 func TestGradientsInMultiLayerNetworkEqualApproximation(t *testing.T) {
-	structure := NNOrder{2, []int{3, 2}, 3}.OfResponseType("regression")
+	order := NNOrder{2, []int{3, 2}, 3}
 	random_w0 := []float64{0.6046602879796196, 0.9405090880450124, 0.6645600532184904, 0.4377141871869802, 0.4246374970712657, 0.6868230728671094, 0.06563701921747622, 0.15651925473279124, 0.09696951891448456, 0.30091186058528707, 0.5152126285020654, 0.8136399609900968, 0.21426387258237492, 0.380657189299686, 0.31805817433032985, 0.4688898449024232, 0.28303415118044517, 0.29310185733681576}
 
 	single_x := []float64{1, 1}
 	single_t := []float64{2, 2, 2}
 
-	RunTestForNNGradients(t, structure.ForWeights, random_w0, single_x, single_t)
+	RunTestForNNGradients(t, order.OfResponseType(Regression).ForWeights, random_w0, single_x, single_t)
+
+	RunTestForNNGradients(t, order.OfResponseType(BinaryClassifier).ForWeights, random_w0, single_x, single_t)
 }
 
 func TestGradientsInSingleLayerNetworkEqualApproximation(t *testing.T) {
-	structure := NNOrder{2, []int{5}, 3}.OfResponseType("regression")
+	order := NNOrder{2, []int{5}, 3}
 	random_w0 := []float64{0.6790846759202163, 0.21855305259276428, 0.20318687664732285, 0.360871416856906, 0.5706732760710226, 0.8624914374478864, 0.29311424455385804, 0.29708256355629153, 0.7525730355516119, 0.2065826619136986, 0.865335013001561, 0.6967191657466347, 0.5238203060500009, 0.028303083325889995, 0.15832827774512764, 0.6072534395455154, 0.9752416188605784, 0.07945362337387198, 0.5948085976830626, 0.05912065131387529, 0.692024587353112, 0.30152268100656, 0.17326623818270528, 0.5410998550087353, 0.544155573000885}
 
 	single_x := []float64{1, 1}
 	single_t := []float64{2, 2, 2}
 
-	RunTestForNNGradients(t, structure.SNForWeights, random_w0, single_x, single_t)
+	RunTestForNNGradients(t, order.OfResponseType(Regression).SNForWeights, random_w0, single_x, single_t)
+
+	RunTestForNNGradients(t, order.OfResponseType(BinaryClassifier).SNForWeights, random_w0, single_x, single_t)
 }
 
 func RunTestForNNGradients(t *testing.T, builderFun func(WeightVector) NeuralNetwork, w0 []float64, single_x XVector, single_t YVector) {

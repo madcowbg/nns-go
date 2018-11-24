@@ -7,14 +7,6 @@ import (
 	"os"
 )
 
-func arrayOfSize(nRepeat int, value float64) []float64 {
-	result := make([]float64, nRepeat)
-	for i := range result {
-		result[i] = value
-	}
-	return result
-}
-
 type Request struct {
 	ShouldFit bool
 	NetworkRT neuralnet.NetworkResponseType
@@ -57,16 +49,16 @@ func main() {
 
 		x := request.X
 		if x == nil {
-			os.Stderr.WriteString("X not given, defaulting to 1s...\n")
+			os.Stderr.WriteString("X not given, defaulting to 0.1s...\n")
 			x = make(neuralnet.XSample, 1)
-			x[0] = arrayOfSize(request.Order.D, 0.1)
+			x[0] = neuralnet.ArrayOfSize(request.Order.D, 0.1)
 		}
 
 		t := request.T
 		if t == nil {
 			os.Stderr.WriteString("T not given, defaulting to 1s...\n")
 			t = make(neuralnet.YSample, 1)
-			t[0] = arrayOfSize(request.Order.K, 1.0)
+			t[0] = neuralnet.ArrayOfSize(request.Order.K, 1.0)
 		}
 
 		responseType := request.NetworkRT
@@ -74,21 +66,20 @@ func main() {
 			responseType = neuralnet.Regression
 		}
 
-		var nn *neuralnet.SingleLayerNN
-		var wts []float64
+		var nn neuralnet.NeuralNetwork
 		if request.ShouldFit {
-			nn, wts = request.Order.OfResponseType(responseType).FitByCG(x, t, w0, request.Verbose)
+			nn = neuralnet.FitByCG(request.Order.OfResponseType(responseType).ForWeights, x, t, w0, request.Verbose)
 		} else {
 			nn = request.Order.OfResponseType(responseType).ForWeights(w0)
-			wts = w0
 		}
+		wts := nn.PackedWts()
 
 		result := Result{
 			wts,
-			nn.PredictSample(x),
-			nn.ErfSampleValue(x, t),
-			nn.GradientSample(x, t),
-			nn.HiddenSample(x),
+			neuralnet.PredictSample(nn, x),
+			neuralnet.ErfSampleValue(nn, x, t),
+			neuralnet.GradientSample(nn, x, t),
+			neuralnet.HiddenSample(nn, x),
 		}
 
 		if err := enc.Encode(result); err != nil {

@@ -15,7 +15,7 @@ func TestSingleLayerNetwork(t *testing.T) {
 	sample_t := YSample{{1, 2, 3}}
 
 	nn := structure.SNForWeights(w0)
-	best_nn := FitByCG(structure.SNForWeights, sample_x, sample_t, w0, false)
+	best_nn := FitByCG(structure.SNForWeights, sample_x, sample_t, w0, false, 1e-12, 100)
 
 	expectTemplateNetwork(t, nn, best_nn, sample_x, sample_t)
 }
@@ -28,7 +28,7 @@ func TestMLNWithSingleLayer(t *testing.T) {
 	sample_t := YSample{{1, 2, 3}}
 
 	nn := structure.ForWeights(w0)
-	best_nn := FitByCG(structure.ForWeights, sample_x, sample_t, w0, false)
+	best_nn := FitByCG(structure.ForWeights, sample_x, sample_t, w0, false, 1e-12, 100)
 
 	expectTemplateNetwork(t, nn, best_nn, sample_x, sample_t)
 }
@@ -50,7 +50,7 @@ func TestMultiLayerNetwork(t *testing.T) {
 		[]float64{0 - 0.000482985965138744, -0.0008840068279246431, -0.000482985965138744, -0.0008840068279246431, -0.000482985965138744, -0.0008840068279246431, -0.02127463868926193, -0.02127463868926193, -0.02127463868926193, -0.02127463868926193, -0.02127463868926193, -0.02127463868926193, -1.028407250015801, -1.028407250015801, -0.03246195834709224, -0.03246195834709224, -1.026329069984532, -1.026329069984532},
 		[][]float64{{0.9640275800758169, 0.9640275800758169, 0.9640275800758169, 0.9938671116374396, 0.9938671116374396}, {0.9950547536867305, 0.9950547536867305, 0.9950547536867305, 0.9949062016530742, 0.9949062016530742}, {0.9950547536867305, 0.9950547536867305, 0.9950547536867305, 0.9949062016530742, 0.9949062016530742}})
 
-	best_nn := FitByCG(structure.ForWeights, sample_x, sample_t, w0, false)
+	best_nn := FitByCG(structure.ForWeights, sample_x, sample_t, w0, false, 1e-12, 1000)
 	ExpectNN(
 		t, sample_x, sample_t, best_nn,
 		[]float64{-1.3630863383661246e-05, 0.43681311195274314, -1.3630863383661246e-05, 0.43681311195274314, -1.3630863383661246e-05, 0.43681311195274314, 0.6035930751398187, 0.6035930751398187, 0.6035930751398187, 0.6035930751398187, 0.6035930751398187, 0.6035930751398187, 1.6652442959580869, 1.6652442959580869, 1.385667784689702, 1.385667784689702, 1.6652536030673724, 1.6652536030673724},

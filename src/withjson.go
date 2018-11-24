@@ -68,7 +68,7 @@ func main() {
 
 		var nn neuralnet.NeuralNetwork
 		if request.ShouldFit {
-			nn = neuralnet.FitByCG(request.Order.OfResponseType(responseType).ForWeights, x, t, w0, request.Verbose)
+			nn = neuralnet.FitByCG(request.Order.OfResponseType(responseType).ForWeights, x, t, w0, request.Verbose, 1e-12, 10000)
 		} else {
 			nn = request.Order.OfResponseType(responseType).ForWeights(w0)
 		}

@@ -93,12 +93,10 @@ func networkLayers(structure *NNStructure) []int {
 	return L
 }
 
-func FitByCG(networkFor func(w0 WeightVector) NeuralNetwork, sampleX XSample, sampleT YSample, w0 WeightVector, verbose bool) NeuralNetwork {
+func FitByCG(networkFor func(w0 WeightVector) NeuralNetwork, sampleX XSample, sampleT YSample, w0 WeightVector, verbose bool, erfTol float64, maxIter int) NeuralNetwork {
 	eta := 1.0
-	MIN_ERF_IMPROVEMENT := 1e-12
-	MAX_TRIES := 10000
 
-	for tries := 0; tries < MAX_TRIES; tries++ {
+	for tries := 0; tries < maxIter; tries++ {
 		n0 := networkFor(w0)
 
 		gradient := GradientSample(n0, sampleX, sampleT)
@@ -129,7 +127,7 @@ func FitByCG(networkFor func(w0 WeightVector) NeuralNetwork, sampleX XSample, sa
 		w1 := perturbed(w0, gradient, -eta)
 		E_new := ErfSampleValue(networkFor(w1), sampleX, sampleT)
 
-		if E_new-ErfValueW0 > -MIN_ERF_IMPROVEMENT || eta < 1e-15 {
+		if ErfValueW0-E_new < erfTol || eta < 1e-15 {
 			os.Stderr.WriteString(fmt.Sprintf("found the best error funciton... %f\n", ErfValueW0))
 			return networkFor(w0)
 		}
